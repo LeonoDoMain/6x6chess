@@ -1,0 +1,7 @@
+#board td {
+    width: 40pt;
+    height: 40pt;
+    background-color: bisque;
+    text-align: center;
+    font-size: 28pt;
+}
