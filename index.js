@@ -18,15 +18,11 @@ const gstatus = {
     turn: {
         counter: 1,
         color: "black",
-        nextTurn: (position) => {
+        nextTurn: () => {
             judgeDeath();
-            gstatus.turn.counter++;
-            gstatus.turn.color = ((gstatus.turn.counter - 1) % 4 > 1) ? "red" : "black";
-            gstatus.turn.position = position;
-        },
-        position: {
-            i: -1,
-            j: -1
+            // gstatus.turn.counter++;
+            // gstatus.turn.color = ((gstatus.turn.counter - 1) % 4 > 1) ? "red" : "black";
+            // TODO
         }
     }
 }
@@ -39,7 +35,7 @@ const move = (last_position, position) => {
 
     let success = false;
 
-    if (p1.type === "soldier") {
+    if (p1.type === "soldier" || p1.type === "chariot") {
         // 判断p2是不是在p1毗邻的位置
         if (
             Math.abs(position.i - last_position.i) + Math.abs(position.j - last_position.j) === 1
@@ -60,48 +56,17 @@ const move = (last_position, position) => {
     if (success) {
         [board[last_position.i][last_position.j], board[position.i][position.j]] = [board[position.i][position.j], board[last_position.i][last_position.j]];
         gstatus.selected = false;
-        gstatus.turn.nextTurn(position);
+        if (ghistory[ghistory.length - 2]?.piece.type !== "chariot" && board[position.i][position.j].type === "chariot")
+            return success;
+        else
+            gstatus.turn.nextTurn();
     }
     return success;
 }
 
-// const pieceClicked = (i, j) => {
-//     // 这里改变选择状态
-//     if (gstatus.selected.show) {
-//         // 移动或者取消
-//         if (gstatus.selected.position.i === i && gstatus.selected.position.j === j) {
-//             // 取消选择
-//             gstatus.selected.show = false;
-//         }
-//         else {
-//             move(gstatus.selected.position, { i, j });
-//         }
-//     }
-//     else {
-//         // 第一次选择
-//         if (board[i][j].color !== gstatus.turn.color) return;
-//         if (i === gstatus.turn.position.i &&
-//             j === gstatus.turn.position.j) {
-//             return;
-//         }
-//         gstatus.selected.show = true;
-//         gstatus.selected.position = { i, j };
-//     }
-//     // 这里改变棋盘状态
-//     if (gstatus.selected.show) {
-//         gstatus.selected.last_position = gstatus.selected.position;
-//         boardElement.children[gstatus.selected.last_position.i].children[gstatus.selected.last_position.j].style.border = "";
-//         boardElement.children[gstatus.selected.position.i].children[gstatus.selected.position.j].style.border = "black solid 1pt";
-//     }
-//     else {
-//         boardElement.children[gstatus.selected.position.i].children[gstatus.selected.position.j].style.border = "";
-//     }
-//     refreshBoard();
-//     refreshStatus();
-// }
-
 const pieceClicked = (i, j) => {
     const lastOperation = ghistory[ghistory.length - 1];
+    const lastLastOperation = ghistory[ghistory.length - 2];
     const clickedPiece = board[i][j];
     if (!lastOperation) {
         // 第一次点击
@@ -126,8 +91,11 @@ const pieceClicked = (i, j) => {
         } else {
             // 如果没有棋子被选择
             if (clickedPiece.color === gstatus.turn.color) {
-                if (lastOperation.position.i === i && lastOperation.position.j === j) return;
-                ghistory.push({ piece: clickedPiece, position: { i, j }, selected: true });
+                if (lastOperation.position.i === i && lastOperation.position.j === j) {
+                    if (!(lastLastOperation.piece.type === "chariot" && ghistory[ghistory.length - 4]?.piece.type !== "chariot"))
+                        return;
+                }
+                else ghistory.push({ piece: clickedPiece, position: { i, j }, selected: true });
             }
             else return;
         }
@@ -202,8 +170,7 @@ const initBoard = () => {
 
 const refreshStatus = () => {
     statusElement.children[0].innerHTML = `turn ${gstatus.turn.counter}\
-    , ${gstatus.turn.color}'s turn\
-    , last position: ${gstatus.turn.position.i}, ${gstatus.turn.position.j}`;
+    , ${gstatus.turn.color}'s turn`;
 }
 
 const judgeDeath = () => {
@@ -273,7 +240,7 @@ const init = () => {
         [new Piece("soldier", "red"), new Piece("horse", "red"), new Piece("soldier", "red"), new Piece("blank", null), new Piece("blank", null), new Piece("blank", null)],
         [new Piece("soldier", "black"), new Piece("soldier", "black"), new Piece("soldier", "black"), new Piece("blank", null), new Piece("blank", null), new Piece("blank", null)],
         [new Piece("blank", null), new Piece("blank", null), new Piece("blank", null), new Piece("blank", null), new Piece("blank", null), new Piece("blank", null)],
-        [new Piece("blank", null), new Piece("horse", "black"), new Piece("blank", null), new Piece("blank", null), new Piece("blank", null), new Piece("blank", null)],
+        [new Piece("blank", null), new Piece("horse", "black"), new Piece("chariot", "black"), new Piece("blank", null), new Piece("blank", null), new Piece("blank", null)],
         [new Piece("blank", null), new Piece("horse", "black"), new Piece("soldier", "red"), new Piece("blank", null), new Piece("blank", null), new Piece("blank", null)],
         [new Piece("blank", null), new Piece("horse", "black"), new Piece("blank", null), new Piece("blank", null), new Piece("blank", null), new Piece("blank", null)]
     ]);
